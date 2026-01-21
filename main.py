@@ -1,6 +1,4 @@
-def main():
-    print("Hello from comp-vision-gui!")
-
+from src.upscaler_gui import gui_main
 
 if __name__ == "__main__":
-    main()
+    gui_main()
