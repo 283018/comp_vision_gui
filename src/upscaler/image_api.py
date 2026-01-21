@@ -1,3 +1,12 @@
+import logging
+import os
+import warnings
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.getLogger('absl').setLevel(logging.ERROR)
+warnings.filterwarnings('ignore')
+
 import contextlib
 import importlib.resources
 from pathlib import Path

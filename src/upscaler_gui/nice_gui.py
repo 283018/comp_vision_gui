@@ -1,18 +1,19 @@
-import base64
-import io
 import logging
 import os
-import traceback
 import warnings
-
-import numpy as np
-from nicegui import run, ui
-from PIL import Image
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.getLogger('absl').setLevel(logging.ERROR)
 warnings.filterwarnings('ignore')
+
+import base64
+import io
+import traceback
+
+import numpy as np
+from nicegui import run, ui
+from PIL import Image
 
 try:
     from upscaler.image_api import Upscaler

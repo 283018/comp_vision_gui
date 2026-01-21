@@ -1,3 +1,12 @@
+import logging
+import os
+import warnings
+
+os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+logging.getLogger('tensorflow').setLevel(logging.ERROR)
+logging.getLogger('absl').setLevel(logging.ERROR)
+warnings.filterwarnings('ignore')
+
 import tensorflow as tf
 from keras import Model, layers
 from keras.saving import register_keras_serializable

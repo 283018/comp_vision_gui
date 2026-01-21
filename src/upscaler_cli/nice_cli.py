@@ -1,16 +1,17 @@
-import argparse
 import logging
 import os
 import warnings
-from pathlib import Path
-
-from upscaler.image_api import Upscaler, load_image, save_image
 
 # just stfu pls
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.getLogger('absl').setLevel(logging.ERROR)
 warnings.filterwarnings('ignore')
+
+import argparse
+from pathlib import Path
+
+from upscaler.image_api import Upscaler, load_image, save_image
 
 
 def main():
