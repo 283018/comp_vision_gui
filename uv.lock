@@ -4,7 +4,7 @@ requires-python = ">=3.13"
 
 [[package]]
 name = "283018-comp-vision"
-version = "0.1.0"
+version = "0.1.1.1"
 source = { editable = "." }
 dependencies = [
     { name = "hatchling" },
