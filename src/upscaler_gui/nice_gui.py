@@ -215,7 +215,9 @@ def build_ui():  # noqa: PLR0915
 
     ui.button("Upscale", on_click=on_upscale)
 
-
-if __name__ in {"__main__", "__mp_main__"}:
+def main():
     build_ui()
     ui.run(title="Upscaler", port=8080)
+
+if __name__ in {"__main__", "__mp_main__"}:
+    main()
