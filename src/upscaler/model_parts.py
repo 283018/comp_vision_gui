@@ -1,0 +1,62 @@
+import tensorflow as tf
+from keras import Model, layers
+from keras.saving import register_keras_serializable
+
+
+def maybe_bn_layer(*, use_bn: bool):
+    return layers.BatchNormalization(dtype=tf.float32) if use_bn else layers.Identity()
+
+
+@register_keras_serializable(package="custom_layers")
+class PixelShuffle(layers.Layer):
+    def __init__(self, scale, **kwargs):
+        super().__init__(**kwargs)
+        self.scale = int(scale)
+
+    def call(self, x):
+        return tf.nn.depth_to_space(x, self.scale)
+
+    def get_config(self):
+        cfg = super().get_config()
+        cfg.update({"scale": self.scale})
+        return cfg
+
+
+def residual_block(x_in, filters, kernel_size=3, *, use_batchnorm=True):
+    bn = maybe_bn_layer(use_bn=use_batchnorm)
+    x = layers.Conv2D(filters, kernel_size, padding="same")(x_in)
+    x = bn(x)
+    x = layers.PReLU(shared_axes=[1, 2])(x)
+    x = layers.Conv2D(filters, kernel_size, padding="same")(x)
+    x = bn(x)
+    return layers.Add()([x_in, x])
+
+
+def upsample_pixelshuffle(x_in, filters, scale=2):
+    x = layers.Conv2D(filters * (scale**2), 3, padding="same")(x_in)
+    x = PixelShuffle(scale=scale)(x)
+    return layers.PReLU(shared_axes=[1, 2])(x)
+
+
+def build_generator(lr_shape=(32, 32, 3), num_res_blocks=12, upscale=4, *, use_batchnorm=True):
+    inp = layers.Input(shape=lr_shape)
+    x = layers.Conv2D(64, 9, padding="same")(inp)
+    x = layers.PReLU(shared_axes=[1, 2])(x)
+    skip = x
+
+    for _ in range(num_res_blocks):
+        x = residual_block(x, 64, use_batchnorm=use_batchnorm)
+
+    x = layers.Conv2D(64, 3, padding="same")(x)
+
+    x = maybe_bn_layer(use_bn=use_batchnorm)(x)
+
+    x = layers.Add()([x, skip])
+
+    n_up = {2: 1, 4: 2, 8: 3}.get(upscale, 2)
+    for _ in range(n_up):
+        x = upsample_pixelshuffle(x, 64, scale=2)
+
+    x = layers.Conv2D(3, 9, padding="same")(x)
+    out = layers.Activation("sigmoid", dtype=tf.float32)(x)
+    return Model(inp, out, name="generator_resnet")
