@@ -54,9 +54,10 @@ def build_ui():  # noqa: PLR0915
     uploaded_image: Image.Image | None = None
     uploaded_name: str = ""
     result_container = None
+    upload_card = None
 
     async def on_upload(e):
-        nonlocal uploaded_image, uploaded_name, result_container
+        nonlocal uploaded_image, uploaded_name, result_container, upload_card
 
         events = e if isinstance(e, list) else [e]
 
@@ -87,7 +88,13 @@ def build_ui():  # noqa: PLR0915
                     or "upload.png"
                 )
 
-                with ui.card().style("width: 720px; margin: 8px"):
+                if upload_card is not None:
+                    upload_card.delete()
+                    upload_card = None
+                    result_container = None
+
+                with ui.card().style("width: 720px; margin: 8px") as card:
+                    upload_card = card  # <-- FIX
                     ui.label(f"Uploaded: {uploaded_name}")
                     ui.image(pil_to_data_url(make_thumbnail(img, 500)))
                     result_container = ui.column()
@@ -117,7 +124,7 @@ def build_ui():  # noqa: PLR0915
             result = await run.io_bound(
                 upscaler.upscale,
                 safe_img,
-                scale=scale, # type: ignore
+                scale=scale,  # type: ignore
                 patch_size=patch,
                 overlap=overlap,
             )
@@ -135,12 +142,26 @@ def build_ui():  # noqa: PLR0915
                     ui.label("Result:")
                     ui.image(pil_to_data_url(make_thumbnail(result, 600)))
                     filename = f"upscaled_{scale}x_{uploaded_name}"
+
                     ui.html(
-                        f'<a href="{data_url}" download="{filename}">Save upscaled image</a>',
+                        f'''
+                        <a href="{data_url}" download="{filename}"
+                           style="
+                               background:#1976d2;
+                               color:white;
+                               padding:8px 14px;
+                               border-radius:6px;
+                               text-decoration:none;
+                               display:inline-block;
+                               font-weight:500;
+                           ">
+                           Save upscaled image
+                        </a>
+                        ''',
                         sanitize=False,
                     )
             else:
-                ui.open(data_url, new_tab=True) # type: ignore
+                ui.open(data_url, new_tab=True)  # type: ignore
 
             ui.notify("Upscaling finished", timeout=2.0)
 
@@ -173,7 +194,15 @@ def build_ui():  # noqa: PLR0915
         overlap_label.set_text(f"Overlap: {int(overlap_slider.value)} px")
 
     scale_slider.on("update", _update_scale_label)
+    scale_slider.on("input", _update_scale_label)
+    scale_slider.on("change", _update_scale_label)
+
     overlap_slider.on("update", _update_overlap_label)
+    overlap_slider.on("input", _update_overlap_label)
+    overlap_slider.on("change", _update_overlap_label)
+
+    _update_scale_label()
+    _update_overlap_label()
 
     patch_input = ui.number(
         label="Patch size (px)",
