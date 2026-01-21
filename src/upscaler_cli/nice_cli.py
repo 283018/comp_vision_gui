@@ -35,7 +35,7 @@ def main():
     parser = argparse.ArgumentParser(description="Upscale an image using SRGAN.")
     parser.add_argument("input", type=Path, help="Path to input image")
     parser.add_argument(
-        "-o", "--output", type=Path, default=Path("output.png"), help="Output path (default: output.png)",
+        "-o", "--output", type=Path, default=None, help="Output path (default: output.png)",
     )
     parser.add_argument("-p", "--patch-size", type=int, default=128, help="Patch size (default: 128)")
     parser.add_argument("--overlap", type=int, default=0, help="Overlap between patches (default: 0)")
@@ -47,7 +47,7 @@ def main():
     upscaler.load()
     img = load_image(args.input)
     sr = upscaler.upscale(img, patch_size=args.patch_size, overlap=args.overlap, scale=args.scale)
-    out_path = Path(f"upscaled_{args.scale}_{args.output}").resolve()
+    out_path = Path(f"upscaled_{args.scale}_{args.output}").resolve() if args.output is None else Path(args.output).resolve()
     save_image(sr, out_path)
     
     
