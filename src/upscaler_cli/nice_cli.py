@@ -30,7 +30,7 @@ def main():
     upscaler.load()
     img = load_image(args.input)
     sr = upscaler.upscale(img, patch_size=args.patch_size, overlap=args.overlap, scale=args.scale)
-    out_path = Path(f"upscaled_{args.scale}_").resolve() / f"{args.output}"
+    out_path = Path(f"upscaled_{args.scale}_{args.output}").resolve()
     save_image(sr, out_path)
     
     
