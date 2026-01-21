@@ -1,3 +1,4 @@
+# upscaler_gui/nice_gui.py
 import logging
 import os
 import warnings
@@ -24,11 +25,11 @@ import tensorflow as tf
 tf.get_logger().setLevel(logging.FATAL)
 
 import base64
+import contextlib
 import io
 import traceback
 
 import numpy as np
-from nicegui import run, ui
 from PIL import Image
 
 try:
@@ -65,6 +66,8 @@ def prepare_image_for_upscaler(img: Image.Image) -> Image.Image:
 
 
 def build_ui():  # noqa: PLR0915
+    from nicegui import ui  # noqa: PLC0415
+
     upscaler = Upscaler()
     upscaler.load()
 
@@ -72,9 +75,10 @@ def build_ui():  # noqa: PLR0915
     uploaded_name: str = ""
     result_container = None
     upload_card = None
+    last_upload_hash: int | None = None
 
     async def on_upload(e):
-        nonlocal uploaded_image, uploaded_name, result_container, upload_card
+        nonlocal uploaded_image, uploaded_name, result_container, upload_card, last_upload_hash
 
         events = e if isinstance(e, list) else [e]
 
@@ -96,6 +100,11 @@ def build_ui():  # noqa: PLR0915
                 if not isinstance(data, (bytes, bytearray)):
                     continue
 
+                data_hash = hash(data)
+                if data_hash == last_upload_hash:
+                    continue
+                last_upload_hash = data_hash
+
                 img = Image.open(io.BytesIO(data)).convert("RGB")
 
                 uploaded_image = img
@@ -106,11 +115,13 @@ def build_ui():  # noqa: PLR0915
                 )
 
                 if upload_card is not None:
-                    upload_card.delete()
+                    with contextlib.suppress(Exception):
+                        upload_card.delete()
                     upload_card = None
                     result_container = None
 
-                with ui.card().style("width: 720px; margin: 8px"):
+                with ui.card().style("width: 720px; margin: 8px") as card:
+                    upload_card = card
                     ui.label(f"Uploaded: {uploaded_name}")
                     ui.image(pil_to_data_url(make_thumbnail(img, 500)))
                     result_container = ui.column()
@@ -137,7 +148,9 @@ def build_ui():  # noqa: PLR0915
         safe_img = prepare_image_for_upscaler(uploaded_image)
 
         try:
-            result = await run.io_bound(
+            from nicegui import run as _run  # noqa: PLC0415
+
+            result = await _run.io_bound(
                 upscaler.upscale,
                 safe_img,
                 scale=scale,  # type: ignore
@@ -230,10 +243,16 @@ def build_ui():  # noqa: PLR0915
 
     ui.button("Upscale", on_click=on_upscale)
 
-def main():
+
+def gui() -> None:
     build_ui()
-    ui.run(title="Upscaler", port=8080)
+
+
+def main() -> None:
+    from nicegui import ui  # noqa: PLC0415
+    ui.run(gui, title="Upscaler", port=8080, reload=False)
+
 
 if __name__ in {"__main__", "__mp_main__"}:
-    build_ui()
-    ui.run(title="Upscaler", port=8080)
+    from nicegui import ui
+    ui.run(gui, title="Upscaler", port=8080, reload=False)

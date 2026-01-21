@@ -5,7 +5,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "283018-comp_vision"
-version = "0.1.1"
+version = "0.1.1.1"
 description = "Computer vision project - Super Resolution GAN, CLI + webGUI"
 readme = "README.md"
 requires-python = ">=3.13"
@@ -19,7 +19,7 @@ dependencies = [
 
 [project.scripts]
 comp_vision-cli = "upscaler_cli:cli_main"
-comp_vision-gui = "upscaler_gui:gui_main"
+comp_vision-gui = "upscaler_gui.nice_gui:main"
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/upscaler", "src/upscaler_cli", "src/upscaler_gui"]
