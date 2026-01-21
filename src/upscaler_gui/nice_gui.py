@@ -3,9 +3,25 @@ import os
 import warnings
 
 os.environ['TF_CPP_MIN_LOG_LEVEL'] = '3'
+os.environ['TF_ENABLE_ONEDNN_OPTS'] = '0'
+os.environ['CUDA_VISIBLE_DEVICES'] = '-1'
 logging.getLogger('tensorflow').setLevel(logging.ERROR)
 logging.getLogger('absl').setLevel(logging.ERROR)
+
+import absl.logging
+
+absl.logging.set_verbosity(absl.logging.FATAL)
+
 warnings.filterwarnings('ignore')
+
+import absl.logging
+
+absl.logging.set_verbosity('fatal')
+absl.logging.use_absl_handler = False
+
+import tensorflow as tf
+
+tf.get_logger().setLevel(logging.FATAL)
 
 import base64
 import io
@@ -94,8 +110,7 @@ def build_ui():  # noqa: PLR0915
                     upload_card = None
                     result_container = None
 
-                with ui.card().style("width: 720px; margin: 8px") as card:
-                    upload_card = card  # <-- FIX
+                with ui.card().style("width: 720px; margin: 8px"):
                     ui.label(f"Uploaded: {uploaded_name}")
                     ui.image(pil_to_data_url(make_thumbnail(img, 500)))
                     result_container = ui.column()
